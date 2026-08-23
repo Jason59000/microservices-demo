@@ -44,4 +44,4 @@ COPY . .
 ENV PORT="8080"
 EXPOSE 8080
 
-ENTRYPOINT ["python", "shoppingassistantservice.py"]
+ENTRYPOINT ["python", "-c", "import otel; import shoppingassistantservice"]

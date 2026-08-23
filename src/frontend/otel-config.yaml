@@ -1,0 +1,14 @@
+# OpenTelemetry configuration for the frontend service.
+# Values are supplied by the deployment environment.
+service:
+  name: frontend
+  namespace: ${OTEL_SERVICE_NAMESPACE:-default}
+  version: ${OTEL_SERVICE_VERSION:-unknown}
+exporters:
+  otlp:
+    endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+    protocol: grpc
+    insecure: ${OTEL_EXPORTER_OTLP_INSECURE:-false}
+resource:
+  attributes:
+    deployment.environment: ${OTEL_RESOURCE_ATTRIBUTES_DEPLOYMENT_ENVIRONMENT:-unknown}

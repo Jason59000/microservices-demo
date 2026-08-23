@@ -44,7 +44,7 @@ class HipsterShopServer {
       const response = charge(call.request);
       callback(null, response);
     } catch (err) {
-      console.warn(err);
+      logger.warn({ err }, 'PaymentService#Charge failed');
       callback(err);
     }
   }
@@ -101,6 +101,6 @@ class HipsterShopServer {
   }
 }
 
-HipsterShopServer.PORT = process.env.PORT;
+HipsterShopServer.PORT = 50051;
 
 module.exports = HipsterShopServer;

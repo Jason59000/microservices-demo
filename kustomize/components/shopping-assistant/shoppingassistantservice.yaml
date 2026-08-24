@@ -64,6 +64,11 @@ spec:
           value: PROJECT_ID_VAL
         - name: REGION
           value: REGION_VAL
+        # Optional OTLP tracing; replace the endpoint when an OpenTelemetry Collector is deployed.
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "opentelemetrycollector:4317"
+        - name: OTEL_SERVICE_NAME
+          value: "shoppingassistantservice"
         resources:
           requests:
             cpu: 100m

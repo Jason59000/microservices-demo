@@ -21,6 +21,12 @@ from urllib.parse import unquote
 from langchain_core.messages import HumanMessage
 from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
 from flask import Flask, request
+from opentelemetry import trace
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+from opentelemetry.instrumentation.flask import FlaskInstrumentor
+from opentelemetry.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from langchain_google_alloydb_pg import AlloyDBEngine, AlloyDBVectorStore
 
@@ -31,6 +37,23 @@ ALLOYDB_TABLE_NAME = os.environ["ALLOYDB_TABLE_NAME"]
 ALLOYDB_CLUSTER_NAME = os.environ["ALLOYDB_CLUSTER_NAME"]
 ALLOYDB_INSTANCE_NAME = os.environ["ALLOYDB_INSTANCE_NAME"]
 ALLOYDB_SECRET_NAME = os.environ["ALLOYDB_SECRET_NAME"]
+
+
+def configure_telemetry():
+    collector_endpoint = os.getenv("OTEL_EXPORTER_OTLP_ENDPOINT") or os.getenv("COLLECTOR_SERVICE_ADDR")
+    if not collector_endpoint:
+        return
+
+    provider = TracerProvider(
+        resource=Resource.create({"service.name": os.getenv("OTEL_SERVICE_NAME", "shoppingassistantservice")})
+    )
+    provider.add_span_processor(
+        BatchSpanProcessor(OTLPSpanExporter(endpoint=collector_endpoint, insecure=True))
+    )
+    trace.set_tracer_provider(provider)
+
+
+configure_telemetry()
 
 secret_manager_client = secretmanager_v1.SecretManagerServiceClient()
 secret_name = secret_manager_client.secret_version_path(project=PROJECT_ID, secret=ALLOYDB_SECRET_NAME, secret_version="latest")
@@ -61,6 +84,7 @@ vectorstore = AlloyDBVectorStore.create_sync(
 
 def create_app():
     app = Flask(__name__)
+    FlaskInstrumentor().instrument_app(app)
 
     @app.route("/", methods=['POST'])
     def talkToGemini():
